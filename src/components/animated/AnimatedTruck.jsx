@@ -36,7 +36,7 @@ const AnimatedTruck = () => {
             className="absolute"
             style={{willChange:'transform'}}
             animate={{x:ellipseMovement}}
-            transition={{type:'spring',stiffness:20}}
+            transition={{type:'spring',stiffness:20}}           
 
             >
             <Image src={ellipse} alt="img" className=" w-[300px] lg:w-[510px] " />

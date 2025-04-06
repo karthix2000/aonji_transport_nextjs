@@ -45,7 +45,7 @@ const SafeteyAnimated = () => {
          animate={{ x: truckMovement,}}
          transition={{ type: 'spring', stiffness: 20 }}
        >
-        <Image src={safeTruck} className=" translate-y-8 lg:translate-y-16 lg:w-80 lg:h-auto " alt=""  />
+        <Image src={safeTruck} className=" translate-y-8 lg:translate-y-16 lg:w-80 lg:h-auto " alt="img"  />
        </motion.div>
       </div>
     </>

@@ -52,7 +52,7 @@ const AnimatedIntime = () => {
          animate={{ x: -truckMovement,}}
          transition={{ type: 'spring', stiffness: 20 }}
        >
-        <Image src={IntimeTruck} className=" translate-x-32 translate-y-8 lg:translate-y-16 lg:w-80 lg:h-auto " alt=""  />
+        <Image src={IntimeTruck} className=" translate-x-32 translate-y-8 lg:translate-y-16 lg:w-80 lg:h-auto " alt="img"  />
        </motion.div>
 
 

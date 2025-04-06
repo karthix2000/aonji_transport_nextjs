@@ -1,7 +1,7 @@
 
 import { create } from "zustand";
 
-const agencyURL = "http://localhost:4000/agencies/";
+const agencyURL = "http://192.168.237.109:4000/agencies";
 
 export const useAgencyStore = create((set,get) => ({
   agencies: [],

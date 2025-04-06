@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-const billsURL = "http://localhost:4000/bills/";
+const billsURL =" http://192.168.237.109:4000/bills/"
 
 const useBillsStore = create((set,get) => ({
     bills: [],

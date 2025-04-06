@@ -10,6 +10,7 @@ import {
   Image,
 } from "@react-pdf/renderer";
 
+
 interface agencyCharges{
   chargeAmount:number;
   chargeRate:number
@@ -149,11 +150,12 @@ const styles = StyleSheet.create({
 
 
 const PDFBillListDocument: React.FC<PDFBillListDocumentProps> = ({ billListData = [],charges, }) => {
+  
     const date = new Date().toLocaleDateString("hi-IN");
     const agency = billListData[0].agency
 
   return (
-    <Document>
+    <Document   >
       <Page size="A4" style={styles.page}>
         {/* Header Section */}
         <View style={styles.headerContainer}>

@@ -45,7 +45,7 @@ const AnimatedAffordablePrice = () => {
          animate={{ x: truckMovement,}}
          transition={{ type: 'spring', stiffness: 20 }}
        >
-        <Image src={fairTruck} className=" -translate-x-32 translate-y-12 lg:translate-y-16 lg:w-80 lg:h-auto " alt=""  />
+        <Image src={fairTruck} className=" -translate-x-32 translate-y-12 lg:translate-y-16 lg:w-80 lg:h-auto " alt="img"  />
        </motion.div>
       </div>
 

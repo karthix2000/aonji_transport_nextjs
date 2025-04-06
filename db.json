@@ -51,7 +51,7 @@
       },
       "totalNumOfParcels": 32,
       "totalAmount": 50,
-      "paymentStatus": false,
+      "paymentStatus": true,
       "deliveryStatus": false,
       "addedToTripFlag": false,
       "consigner": {

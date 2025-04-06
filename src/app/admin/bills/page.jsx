@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import "./styles/dataGridStyles.css";
@@ -11,18 +11,38 @@ import PDFBillListPage from "./components/PDFViewer/PDFBillListPage";
 import { Modal, Button } from "flowbite-react";
 import { TextInput, Label } from "flowbite-react";
 import { useRouter } from "next/navigation";
+
+
 import {
   Table,
-  TableHeader,
   TableBody,
-  TableColumn,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
   TableRow,
-  TableCell
-} from "@nextui-org/table";
+} from "@/components/ui/table"
 
 import "./styles/animations.css"
 import { G } from "@react-pdf/renderer";
 import Link from "next/link";
+import Lottie from "lottie-react"
+import loadingAnimationData from "../../../../public/assets/animations/aonjiLoading.json"
+
+import { saveAs } from 'file-saver';
+import { pdf } from '@react-pdf/renderer';
+import PDFBillListDocument from "./components/PDFDocument/PDFBillListDocument";
+import {useReactToPrint } from "react-to-print"
+import html2canvas  from "html2canvas"
+import jsPDF from 'jspdf'
+import { useBreakpoint } from "./hooks/useBreakPoint";
+import PdfComponentToPrint from "./components/PdfComponentToPrint";
+import logo from "../../../../public/ANJITLOGOBLACK.svg"
+import Image from 'next/image'
+
+
+
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -41,7 +61,85 @@ function getYearsFromYearToCurrent(startYear) {
 
 const DataGrid = () => {
   const router = useRouter()
-  const refs = useRef([]);
+  const { isMobile } = useBreakpoint();
+
+  const pdfComonentRef = useRef(null)
+ 
+
+   const handlePrintPdf = useReactToPrint({
+      contentRef:pdfComonentRef, 
+      documentTitle: "A4_Print_Document",
+      removeAfterPrint: true, 
+      pageStyle: `
+         @page {
+      size: A4;
+      margin: 0;
+    }
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+      }
+      #pdfContent {
+        display: block !important;
+        width: 100%;
+        height: auto !important;
+        overflow: hidden;
+      }
+    }
+      `,
+    });
+
+    const handlePrintPdfHtml2Canvas = async () => {
+      const element = document.getElementById("pdfContent"); // Capture this div
+      if (!element) {
+        console.error("No element found to print");
+        return;
+      }
+    
+      // Store original styles to revert later
+      const originalWidth = element.style.width;
+      const originalHeight = element.style.height;
+    
+      // ✅ Apply A4 size dynamically only during capture
+      element.style.width = "794px";
+      element.style.height = "auto"; // Allow dynamic height
+    
+      await new Promise((resolve) => setTimeout(resolve, 200)); // Allow DOM to update
+    
+      // Capture the element as an image
+      const canvas = await html2canvas(element, { scale: 2 }); // High resolution
+      const imgData = canvas.toDataURL("image/png");
+    
+      // Revert to original size
+      element.style.width = originalWidth;
+      element.style.height = originalHeight;
+    
+      // Create a new PDF
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+    
+      // Convert the captured image dimensions to mm
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+    
+      let yPosition = 0; // Start position for adding images
+    
+      while (yPosition < imgHeight) {
+        pdf.addImage(imgData, "PNG", 0, -yPosition, imgWidth, imgHeight);
+        yPosition += pdfHeight; // Move to next page height
+        if (yPosition < imgHeight) {
+          pdf.addPage(); // Add a new page if content is still left
+        }
+      }
+    
+      pdf.save("A4_Print_Document.pdf");
+    };
+    
+    
+
+
+  
   // over all bills, current bills state
   const { bills, fetchBills, updateBill } = useBillsStore();
   // bills that are about to deliver which are got from trip. uses tripIds state to set this state
@@ -49,12 +147,15 @@ const DataGrid = () => {
   // unpaid bills of the deliveryBillsList state. to get total amount and total charge we use.
   const [unpaidBillsList,setUnpaidBillsList]=useState([])
   const [loading, setLoading] = useState(true);
+
   
   const [openPdfModal, setOpenPdfModal] = useState(false);
   const [openChargeseModal, setOpenChargesModal] = useState(false);
   const [PDFBillListPageData,setPDFBillListPageData] = useState(null)
   // bills ids are selected to set the trip
   const [tripIds,setTripIds]=useState([])
+
+  const [printBillsFlag,setPrintBillsFlag]=useState(false)
 
   //bills request body to get bills data from backend according to year, month, city.
   const [billsReqBody, setBillsReqBody] = useState({
@@ -473,13 +574,36 @@ const DataGrid = () => {
     });
   }, []);
 
- 
+//  loading || years.length === 0
 
   if (loading || years.length === 0) {
-    return <div> <div className="flex justify-center m-20 " >
-      Loading...
-      </div></div>; // You can replace this with a spinner or fallback UI
+    return <div className="w-full h-[calc(100vh-62px)] gap-5 flex flex-col justify-center items-center"  >
+    <div className=" flex   justify-center items-center" >
+            <Lottie
+            animationData={loadingAnimationData}
+            loop={true}
+            className="flex justify-center items-center w-64 h-auto lg:w-[484px] lg:h-auto "
+            alt="loading"
+            
+            />
+      </div>
+      <div>
+        Loading...
+      </div>
+    </div>
+       // You can replace this with a spinner or fallback UI
   }
+
+  // const downloadPdf = async () => {
+  //   const fileName = 'test.pdf';
+  //   const blob = await pdf(<PDFBillListDocument />).toBlob();
+  //   saveAs(blob, fileName);
+  // };
+
+
+   
+
+  
 
   return (
     <>
@@ -565,7 +689,7 @@ const DataGrid = () => {
             <div className="flex justify-center items-end mt-3 ">
               <button
                 type="button"
-                onClick={()=>{handleReq;console.log("charges",Charges,"dleivery bills",deliveryBillsList)}}
+                onClick={()=>{handleReq;console.log("charges",Charges,"dleivery bills",deliveryBillsList,"is mobile",isMobile)}}
                 className=" flex justify-center items-center my-1  h-10  text-white   bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5    dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
               >
                 <span> Search</span>
@@ -596,7 +720,11 @@ const DataGrid = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setOpenChargesModal(true);
+                    setOpenChargesModal(()=>{
+                      if(deliveryBillsList.length==0){
+                        return false,alert("First add bills to trip to add bill charges.")
+                        }else return true
+                    });
                   }}
                   className=" flex justify-center items-center my-1  h-10  text-white   bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5    dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                 >
@@ -633,23 +761,28 @@ const DataGrid = () => {
 
       <hr />
 
+      
+      
+
       <div className=" md:flex  " >  
         
       <div className="p-4 " >
         <h1 className="font-mono text-center font-extrabold text-2xl" >OutStation Delivery Charges</h1>
-      <Table aria-label="bill-perview" className="font-mono" >
-                        <TableHeader  columns={outStationChargeTableColumns}>
+      <Table  >
+                        <TableHeader >
+                          <TableRow>
                        
-                         <TableColumn>Articels</TableColumn>
-                          <TableColumn>Charge</TableColumn>
-                          <TableColumn>Charged Amount</TableColumn>
+                         <TableHead>Articels</TableHead>
+                          <TableHead>Charge</TableHead>
+                          <TableHead>Charged Amount</TableHead>
+                          </TableRow>
 
                       </TableHeader>
 
                       <TableBody>
 
                       {outStationCharges.map((item,index)=>(
-                        <TableRow key={index} className="border-b-2"  >
+                        <TableRow key={index}  >
                         <TableCell className="text-center" key={`${index}-articels`} >{item.articles} </TableCell>
                         <TableCell className="text-center" key={`${index}-charge`} >₹{item.charge} </TableCell>
                         <TableCell className="text-center" key={`${index}-chargedAmount`} >₹{item.chargeAmount} </TableCell>
@@ -667,19 +800,19 @@ const DataGrid = () => {
       </div>
       <div className="p-4" >
         <h1 className="font-mono text-center font-extrabold text-2xl" >Agency Commision Charges</h1>
-      <Table aria-label="bill-perview" className="font-mono" >
+      <Table  >
                         <TableHeader columns={agencyCommissionChargesTableColumns}>
-                       
-                         <TableColumn>Total Amount</TableColumn>
-                          <TableColumn>Charge Rate</TableColumn>
-                          <TableColumn>Charged Amount</TableColumn>
-
+                         <TableRow>
+                         <TableHead>Total Amount</TableHead>
+                          <TableHead>Charge Rate</TableHead>
+                          <TableHead>Charged Amount</TableHead>
+                          </TableRow>
                       </TableHeader>
 
                       <TableBody>
 
                       
-                        <TableRow  className="border-b-2"  >
+                        <TableRow    >
                         <TableCell className="text-center"  > ₹{Charges.totalAmount}  </TableCell>
                         <TableCell className="text-center" >{agencyCommissionCharges.chargeRate}% </TableCell>
                         <TableCell className="text-center" >₹{agencyCommissionCharges.chargeAmount} </TableCell>
@@ -697,35 +830,52 @@ const DataGrid = () => {
       </div>
 
 
-        <div className="flex justify-end p-5" >
+        <div className="flex justify-end p-5 gap-4 " >
+          <div>
         <button
                 type="button"
                 onClick={()=>{handleReq
                   handleSetTrip()
                 }}
-                className=" flex justify-center items-center my-1 px-6  h-14 text-2xl  text-white   bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg  p-2.5    dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
               >
                 <span> Set Trip</span>
               </button>
+              </div>
+              
+
+                   
+                 
+                 
         </div>
         
          </div>
 
-      <Modal
+                {/*print bills list modals are here  */}
+       <Modal
         className="w-full h-full"
         show={openPdfModal}
         onClose={() => setOpenPdfModal(false)}
       >
         <Modal.Header>Print Bills List</Modal.Header>
         <Modal.Body>
-          <PDFBillListPage BillListData={deliveryBillsList} charges={PDFBillListPageData}  />
+          
+          <PDFBillListPage  BillListData={deliveryBillsList} charges={PDFBillListPageData}   />
+          
         </Modal.Body>
         <Modal.Footer>
           <Button color="gray" onClick={() => {console.log(Charges,"unapid",); }}>
             Close
           </Button>
+          <Button color="gray" onClick={()=>{setPrintBillsFlag(true)}}   >
+            Download
+          </Button>
+          
+          
         </Modal.Footer>
-      </Modal>
+      </Modal>  
+
+{/* {openPdfModal&&<div><PDFBillListPage BillListData={deliveryBillsList} charges={PDFBillListPageData}  /></div>}  */}
 
 
       <Modal
@@ -939,6 +1089,195 @@ const DataGrid = () => {
         </Modal.Footer>
       </Modal>
 
+
+     {
+      true &&
+      <div>
+      <div>
+        <button onClick={handlePrintPdfHtml2Canvas} >print</button>
+      </div>
+      <div id="pdfContent" ref={pdfComonentRef} className=" p-1 " >
+        
+      <div className=" text-black p-1 border-2 bg-slate-50 w-full  "  >
+               {/* header section */}
+       
+               <div className=" p-2  flex justify-between  " >
+       
+                 <div className="text-xs font-sans font-semibold " >
+                         <div  >
+                            <p className="leading-none" > Contact : 9989989898 </p>
+                            <p className="leading-none" > email : aonjiTransport@mail.com</p>
+                         </div>
+       
+                 </div>
+       
+                 <div className=" flex flex-col items-center "  >
+                     <div  >
+                  <div className="  font-bebas font-bold text-5xl  tracking-[10px]  " >AONJI</div>
+                 
+                  <div className=' text-xs  font-sans font-bold  tracking-[6.5px] mr-[2px] mt-2  ' >TRANSPORT</div>
+                  </div>
+                  <div className='text-xs font-bold mt-4  ' > Beside New RTC Bustand proddatur,516360. </div>
+                  <div className='' >(letter pad)</div>
+       
+                 </div>
+       
+                 <div  >
+                     
+                     <Image  src={logo}  alt='logo' width={120}   />
+                     
+       
+                 </div>
+     
+       
+               </div>
+                 <div className='bg-black w-full h-[2px] ' ></div>
+                 <div className='flex justify-between  ' > 
+                     <div className='flex gap-2' >
+                      {/* not clear about agency where.. still has some work to do  */}
+                     <div>Agency name: </div>
+                     <div>Driver's name:{Charges.driverName} </div>
+                     </div>
+                     <div>Date:{dateObj.toLocaleDateString("hi-IN")} </div>
+                 </div>
+       
+             </div>
+             {/* list table here */}
+             <div className=" border-2 border-gray-200 rounded-sm m-1 p-1  " >
+              <div>
+                <Table>
+              <TableHeader>
+                    <TableRow  >
+                           <TableHead  >Sl No.</TableHead>
+                            <TableHead>Bill No.</TableHead>
+                             <TableHead>Consigner</TableHead>
+                             <TableHead>Consignees</TableHead>
+                            <TableHead >Total Lot</TableHead>
+                            <TableHead >Amount</TableHead>
+                            <TableHead >Payment</TableHead>
+                            
+                       </TableRow>
+                     </TableHeader>
+                     <TableBody className='font-Courier_Prime' >
+                      {deliveryBillsList?.map((Bill,index)=>(
+                        <TableRow key={index}   style={ Bill.paymentStatus?null: { backgroundColor:"lightgray",color:"black",}} >
+                          <TableCell  >{index+1}</TableCell>
+                          <TableCell> {Bill.lrNumber}  </TableCell>
+                          <TableCell> {Bill.consigner.name} </TableCell>
+                          <TableCell >{Bill.consignees?.map((c)=>(c.name+", ")||"N/A")}  </TableCell>
+                          <TableCell   >  {Bill.totalNumOfParcels}  </TableCell>
+                          <TableCell> {Bill.totalAmount} </TableCell>
+                          <TableCell  > {Bill.paymentStatus?"paid":"to pay"} </TableCell>
+
+                          
+
+                        </TableRow>
+                      ))}
+                      </TableBody>
+                      <TableFooter className='font-Courier_Prime' >
+                        <TableRow>
+                          <TableCell colSpan={6} >
+                            Total Amount
+                          </TableCell>
+                          <TableCell >₹{Charges.totalAmount} </TableCell>
+                        </TableRow>
+                        <TableRow>
+                        <TableCell colSpan={6} >Total Unpaid Amount</TableCell>                           
+                          <TableCell >₹{Charges.totalUnpaidAmount} </TableCell>                        
+                        </TableRow>
+                        <TableRow>
+                        <TableCell colSpan={6} >Agent Commision</TableCell>                           
+                          <TableCell >(-) ₹{Charges.agencyCharges.chargeAmount} </TableCell>                        
+                        </TableRow>
+                        
+                        <TableRow>
+                        <TableCell colSpan={6} >Out of station charges</TableCell>                           
+                          <TableCell >(-) ₹{Charges.totalOutstationCharges} </TableCell>                        
+                        </TableRow>
+                        <TableRow>
+                        <TableCell colSpan={6} >Total Payable Amount</TableCell>                           
+                          <TableCell >₹{Charges.netPayableAmount}/- </TableCell>                        
+                        </TableRow>
+                      </TableFooter>
+                      </Table>
+                     
+              </div>
+              <hr />
+              <div className="flex justify-between mt-16  " >
+                <div  >
+                  <h1 className="text-center font-bold ">Out of station delivery charges</h1>
+                  <div className="border-gray-300" >
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                      <TableHead> Articels </TableHead>
+                      <TableHead>Charge Rate</TableHead>
+                      <TableHead>Charged Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className='font-Courier_Prime' >
+                      {outStationCharges.map((value,index)=>(
+                        <TableRow key={index} >
+                           <TableCell>{value.articles}</TableCell>
+                           <TableCell>₹{value.charge} </TableCell>
+                           <TableCell>₹{value.chargeAmount} </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                    <TableFooter className='font-Courier_Prime' >
+        <TableRow>
+          <TableCell colSpan={2}>Total Charge</TableCell>
+          <TableCell >₹{Charges.totalOutstationCharges} </TableCell>
+        </TableRow>
+      </TableFooter>
+                  </Table>
+                  </div>
+
+                </div>
+                <div  >
+                  <h1 className="text-center font-bold " >Agency Commision Charges</h1>
+                <Table>
+                    <TableHeader>
+                      <TableRow>
+                      <TableHead> Total Amount </TableHead>
+                      <TableHead>Charge Rate(in %)</TableHead>
+                      <TableHead>Charged Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className='font-Courier_Prime' >
+                     
+                        <TableRow  >
+                           <TableCell>₹{Charges.totalAmount}</TableCell>
+                           <TableCell>{Charges.agencyCharges.chargeRate}% </TableCell>
+                           <TableCell>₹{Charges.agencyCharges.chargeAmount} </TableCell>
+                        </TableRow>
+                     
+                    </TableBody>
+                    <TableFooter className='font-Courier_Prime' >
+        <TableRow>
+          <TableCell colSpan={2}>Total Charge</TableCell>
+          <TableCell >₹{Charges?.agencyCharges.chargeAmount} </TableCell>
+        </TableRow>
+      </TableFooter>
+                  </Table>
+
+                </div>
+              </div>
+
+
+
+
+             </div>
+             
+     
+     
+
+
+    </div>
+    </div>
+     }
+
+     
 
 
     </>

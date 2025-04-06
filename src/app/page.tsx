@@ -11,14 +11,44 @@ import Footer from "../components/Footer.jsx"
 import animationDataGrow from "../../public/assets/animations/gain-profit.json";
 import animationDataFemaleInvestor from "../../public/assets/animations/female-investors.json";
 import animationDataFirst from "../../public/assets/animations/first-place-badge.json";
-
-
+import loadingAnimationData from "../../public/assets/animations/aonjiLoading.json"
+import { useState,useEffect } from "react";
 
 
 
 
 
 const homePage = () => {
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Set a timeout to hide the loading animation after 3 seconds
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 6000); // Change 3000 to the desired duration in milliseconds
+
+    return () => clearTimeout(timer); // Cleanup timeout on component unmount
+  }, []);
+
+
+  if (loading ) {
+    return <div className="w-full h-[calc(100vh-62px)] gap-5 flex flex-col justify-center items-center"  >
+    <div className=" flex   justify-center items-center" >
+            <Lottie
+            animationData={loadingAnimationData}
+            loop={true}
+            className="flex justify-center items-center w-64 h-auto lg:w-[484px] lg:h-auto "
+            alt="loading"
+            
+            />
+      </div>
+      <div>
+        Loading...
+      </div>
+    </div>
+       // You can replace this with a spinner or fallback UI
+  }
   
 
 
@@ -185,7 +215,7 @@ const homePage = () => {
 
         
 
-      <Footer />
+       <Footer /> 
     </>
   );
 };
